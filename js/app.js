@@ -1,12 +1,14 @@
 // Array holding the card stack
-let cards = ["fa-diamond", "fa-diamond",
-             "fa-paper-plane-o", "fa-paper-plane-o",
-             "fa-anchor", "fa-anchor",
-             "fa-bolt", "fa-bolt",
-             "fa-cube", "fa-cube",
-             "fa-leaf", "fa-leaf",
-             "fa-bicycle", "fa-bicycle",
-             "fa-bomb", "fa-bomb"]
+let cards = ["fa-diamond",
+             "fa-paper-plane-o",
+             "fa-anchor",
+             "fa-bolt",
+             "fa-cube",
+             "fa-leaf",
+             "fa-bicycle",
+             "fa-bomb"];
+
+cards = cards.concat(card);
 
 // Holds the open card or null if no card is open
 let openCardElement = null;
@@ -28,6 +30,8 @@ let winningScreenElement;
 let winratingElement;
 // Elements holder the star rating icons
 let starsElements;
+// True when animation is running and we shouldn't handle user input
+let waitForAnimation;
 
 /**
  * Shuffle function from; http://stackoverflow.com/a/2450976
@@ -60,10 +64,13 @@ function restart() {
         cardElements[i].children[0].className = "fa " + cards[i];
         cardElements[i].className = "card";
     }
-    movesCount = 0;
+    updateGameTime(true);
+    updateMoves(true);
     matchCount = 0;
     stars = 3;
     gameTime = 0;
+    waitForAnimation = false;
+    openCardElement = null;
 }
 
 /**
@@ -96,14 +103,21 @@ function openCard(card) {
  */
 function closeCard(card){
     card.className = "card"
-    openCardElement = null;
+    if(openCardElement == card)
+        openCardElement = null;
 }
 
 /**
  * Updates the move counter and information on screen. Also check to see if the star rating should be lowered
  *
+ * @param {bool} true if movesCount should be reset, default false
  */
-function updateMoves() {
+function updateMoves(reset=false) {
+    if(reset)
+        movesCount = 0;
+    else
+        ++movesCount;
+
     movesElement.innerHTML = movesCount + " moves";
     if(movesCount == 12)
     {
@@ -115,7 +129,6 @@ function updateMoves() {
         --stars;
         starsElements[1].className = "fa fa-star-o";
     }
-    ++movesCount;
 }
 
 /**
@@ -138,9 +151,11 @@ function checkMatch(card0, card1) {
 function setWrongGuess(card0, card1) {
     card0.className = "card wrong";
     card1.className = "card wrong";
+    waitForAnimation = true;
     setTimeout(() => {
         closeCard(card0);
         closeCard(card1);
+        waitForAnimation = false;
     }, 500);
 }
 
@@ -169,7 +184,7 @@ function hideWinningScreen(){
  */
 function cardClicked(e) {
     card = e.target;
-    if(card.className != "card")
+    if(waitForAnimation || card.className != "card")
         return;
 
     if(openCardElement) {
@@ -185,12 +200,21 @@ function cardClicked(e) {
     if(matchCount == 8)
         showWinningScreen();
 }
-/**
- * Increments the game time and sets a timeout for the next update. This will not be 100% accurate, but is good enough for this purpouse.
+ 
+/* Updates the game time and sets a timeout for the next update.
+ * This will not be 100% accurate, but is good enough for this purpouse.
  *
+ * @param {bool} reset reset timer if true, default: false
  */
-function updateGameTime() {
-    ++gameTime;
+function updateGameTime(reset=false) {
+    if(matchCount == 8)
+        return;
+
+    if(reset)
+        gameTime = 0;
+    else
+        ++gameTime;
+    document.querySelector(".gameTime").innerHTML = gameTime + " seconds";
     setTimeout(updateGameTime, 1000);
 }
 
@@ -210,7 +234,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector(".playagain-btn").addEventListener('click', restart);
     document.querySelector(".restart").addEventListener('click', restart);
 
-
-    setTimeout(updateGameTime, 1000);
     restart();
 });

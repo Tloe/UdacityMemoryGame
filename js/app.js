@@ -8,7 +8,7 @@ let cards = ["fa-diamond",
              "fa-bicycle",
              "fa-bomb"];
 
-cards = cards.concat(card);
+cards = cards.concat(cards);
 
 // Holds the open card or null if no card is open
 let openCardElement = null;
